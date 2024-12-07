@@ -1,5 +1,5 @@
 import { Ollama } from "ollama";
-import { AzureOpenAI } from "openai";
+import { OpenAI } from "openai";
 
 import { SocialMediaPost } from "./types";
 
@@ -25,7 +25,7 @@ export class ChatGptChatbot {
     const openai = this._getOpenAiClient();
 
     const response = await openai.chat.completions.create({
-      model: "f2agpt4o", // custom azure deployment
+      model: "gpt-4o-mini", // custom azure deployment
       messages: [
         {
           role: "system",
@@ -57,7 +57,7 @@ Content: ${post.content}`,
     const openai = this._getOpenAiClient();
 
     const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini", // custom azure deployment
+      model: "gpt-4o-mini",
       messages: [
         {
           role: "system",
@@ -94,10 +94,8 @@ Content: ${post.content}`,
    * Get Open AI client.
    */
   private _getOpenAiClient() {
-    const openai = new AzureOpenAI({
+    const openai = new OpenAI({
       apiKey: this._config.openAiApiKey,
-      endpoint: "https://first2apply.openai.azure.com/",
-      apiVersion: "2024-02-15-preview",
     });
 
     return openai;
