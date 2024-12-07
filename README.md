@@ -1,3 +1,12 @@
+# Before using this tool
+This tool is intended to be used as a marketing assistant, not as a tool for SPAM!
+This is why it only supports using a single Reddit account.
+
+It also limits the number of replies per hour to 10.
+
+These have been the best results in my experience to not flood reddit with spam comments.
+Also shilling your product too much will get you downvoted into oblivion on Reddit, so I would keep it cool.
+
 # Getting started
 In order to run this project you need to install [Ollama](https://ollama.com/) and download the model named `llama3.2:latest` using a `pull` command from the llama cli.
 
