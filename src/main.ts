@@ -35,15 +35,20 @@ async function boostrap() {
     userAgent: env.reddit.userAgent,
   });
   console.log(`Reddit API initialized using user ${env.reddit.username}`);
-  // const chatbot = new ChatGptChatbot({
-  //   openAiApiKey: env.openAiApiKey,
-  // });
-  const model = "llama3.2:latest";
-  const chatbot = new OllamaChatbot({
-    host: env.ollama.host,
-    model,
+  const chatbot = new ChatGptChatbot({
+    azureEndpoint: env.azure.endpoint,
+    azureApiKey: env.azure.apiKey,
+    modelName: env.azure.modelName,
   });
-  console.log(`Ollama Chatbot initialized using model ${model}`);
+  console.log(`ChatGPT Chatbot initialized.`);
+
+  // Uncomment to use Ollama
+  // const model = "llama3.2:latest";
+  // const chatbot = new OllamaChatbot({
+  //   host: env.ollama.host,
+  //   model,
+  // });
+  // console.log(`Ollama Chatbot initialized using model ${model}`);
 
   const run = async () => {
     try {
@@ -57,12 +62,14 @@ async function boostrap() {
   };
 
   // every hour get the latest posts and process them
-  schedule("0 * * * *", run);
+  // schedule("0 * * * *", run);
 
   // run once on startup
   await run();
 
   console.log(`Done.`);
+
+  await db.destroy();
 }
 
 boostrap().catch(console.error);
@@ -75,16 +82,14 @@ async function getLatestPosts({
   socialMediaPostsRepo: SocialMediaPostsRepository;
 }) {
   const subreddits = [
-    "layoffs",
+    // "layoffs",
     "jobsearchhacks",
-    // "cscareerquestions",
+    "cscareerquestions",
     "csMajors",
     "jobhunting",
     "remotework",
     "recruitinghell",
   ];
-  // const subreddits = ["cscareerquestionsEU"];
-  // const subreddits = ["jobs"];
   for (const subreddit of subreddits) {
     const posts = await redditApi.getSubredditPosts({
       subreddit,
@@ -120,10 +125,11 @@ async function processNewestPosts({
   let remainingReplies = 10;
   for (const post of unprocessedPosts) {
     try {
-      console.log(`Checking if post is relevant ...`);
+      // console.log(`Checking if post is relevant ...`);
       const isPostRelevant = await chatbot.isPostRelevant({ post });
-      console.log(`${isPostRelevant} - ${post.title}`);
       if (isPostRelevant) {
+        console.log(`${post.title}`);
+        console.log(`${post.url}`);
         const reply = await chatbot.generateReply({ post });
         await socialMediaPostsRepo.saveReply({
           reply: {
@@ -132,18 +138,25 @@ async function processNewestPosts({
           },
         });
         console.log(`Reply: ${reply}`);
+        console.log("----\n");
+        remainingReplies--;
 
-        if (remainingReplies > 0) {
-          await redditApi.replyToPost({
-            postId: post.externalId,
-            text: reply,
-          });
-          remainingReplies--;
-          console.log(`Replied to post: ${post.externalId}`);
-        } else {
-          console.log(
-            "Skipping replying to post because were out of quota for this run."
-          );
+        // if (remainingReplies > 0) {
+        //   await redditApi.replyToPost({
+        //     postId: post.externalId,
+        //     text: reply,
+        //   });
+        //   remainingReplies--;
+        //   console.log(`Replied to post: ${post.externalId}`);
+        // } else {
+        //   console.log(
+        //     "Skipping replying to post because were out of quota for this run."
+        //   );
+        // }
+
+        if (remainingReplies <= 0) {
+          console.log("Out of quota for this run.");
+          break;
         }
       }
     } catch (error) {

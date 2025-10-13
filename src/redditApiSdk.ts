@@ -53,7 +53,7 @@ export class RedditApiSdk {
     }>({
       baseUrl: REDDIT_OAUTH_URL,
       method: "get",
-      path: `/r/${subreddit}/new`,
+      path: `/r/${subreddit}/hot`,
       headers: {
         Authorization: `Bearer ${accessToken}`,
         "User-Agent": this._config.userAgent,

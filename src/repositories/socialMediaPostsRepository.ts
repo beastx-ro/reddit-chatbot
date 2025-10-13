@@ -16,7 +16,7 @@ export class SocialMediaPostsRepository {
         posts.map((post) => ({
           external_id: post.externalId,
           title: post.title,
-          content: post.content,
+          content: post.content.trim(),
           url: post.url,
           processed: 0,
         }))

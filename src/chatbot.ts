@@ -1,5 +1,7 @@
 import { Ollama } from "ollama";
-import { OpenAI } from "openai";
+import { AzureOpenAI } from "openai";
+import { z } from "zod";
+import { zodResponseFormat } from "openai/helpers/zod";
 
 import { SocialMediaPost } from "./types";
 
@@ -14,7 +16,9 @@ export class ChatGptChatbot {
    */
   constructor(
     private _config: {
-      openAiApiKey: string;
+      azureEndpoint: string;
+      azureApiKey: string;
+      modelName: string;
     }
   ) {}
 
@@ -24,8 +28,10 @@ export class ChatGptChatbot {
   async isPostRelevant({ post }: { post: SocialMediaPost }) {
     const openai = this._getOpenAiClient();
 
+    if (!post.content) return false;
+
     const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini", // custom azure deployment
+      model: this._config.modelName,
       messages: [
         {
           role: "system",
@@ -38,16 +44,21 @@ Title: ${post.title}
 Content: ${post.content}`,
         },
       ],
-      temperature: 0,
-      max_tokens: 1,
-      top_p: 0,
-      frequency_penalty: 0,
-      presence_penalty: 0,
+      max_completion_tokens: 5000,
+      response_format: zodResponseFormat(PostRelevanceSchema, "PostRelevance"),
     });
 
-    const message = response.choices[0].message.content?.trim();
+    const choice = response.choices[0];
+    if (choice.finish_reason !== "stop") {
+      throw new Error(
+        `OpenAI response did not finish: ${choice.finish_reason}`
+      );
+    }
+    const exclusionDecision = PostRelevanceSchema.parse(
+      JSON.parse(choice.message.content || "{}")
+    );
 
-    return message?.toLowerCase() === "yes";
+    return exclusionDecision.isRelevant;
   }
 
   /**
@@ -57,7 +68,7 @@ Content: ${post.content}`,
     const openai = this._getOpenAiClient();
 
     const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: this._config.modelName,
       messages: [
         {
           role: "system",
@@ -70,11 +81,7 @@ Title: ${post.title}
 Content: ${post.content}`,
         },
       ],
-      temperature: 0,
-      max_tokens: 200,
-      top_p: 0,
-      frequency_penalty: 0,
-      presence_penalty: 0,
+      max_completion_tokens: 16384,
     });
 
     const message = response.choices[0].message.content?.trim();
@@ -94,8 +101,11 @@ Content: ${post.content}`,
    * Get Open AI client.
    */
   private _getOpenAiClient() {
-    const openai = new OpenAI({
-      apiKey: this._config.openAiApiKey,
+    const openai = new AzureOpenAI({
+      // apiVersion: "2024-10-21",
+      apiVersion: "2024-12-01-preview",
+      endpoint: this._config.azureEndpoint,
+      apiKey: this._config.azureApiKey,
     });
 
     return openai;
@@ -120,6 +130,7 @@ What First2Apply is NOT:
 The ideal customer profile is someone who is actively looking for a job, has a resume, and is familiar with job boards.
 You are responsible for reviewing social media posts and provide helpful feedback as well as mentioning how the app can be useful to the user.
 You need to pretend to have used the app and offer it as a solution to the user's problem.
+Don't consider posts where people already got a job.
 
 Make sure you never:
   - Mention that you work for First2Apply.
@@ -133,11 +144,27 @@ Make sure you never:
   - Provide any information that could be considered defamatory or libelous.
   - Provide any information that could be considered harmful or dangerous.
   - Provide any information that could be considered illegal or unethical.
-  - Keep it short and sweet. Maybe under 500 characters.
+  - Keep it short and sweet. Maybe under 1000 characters.
+  - Avoid using em dashes, use commas or semicolons instead, try to sound as human as possible.
 
 Here are a few ideas that you should know job hunting:
   - Applying to jobs as soon as they are posted increases your chances of getting noticed/initerviewed/hired.
   - It is still not proven that ATS systems are automatically rejecting resumes by using AI to filter out candidates based on keywords.
+
+Here are some examples of good replies:
+
+Post Title: "What job boards are actually better than the mainstream ones (LinkedIn, Indeed, ZipRecruiter)?"
+Post Content: "Hi everyone! I’ve been seeing many people talk about how there are better job boards than LinkedIn, Indeed, and ZipRecruiter.
+For me when I was looking for my first role in SWE, I found my jobs through these platforms but now I’m hearing about a bunch more nowadays (Hiring Cafe, FlexJobs, RemoteCo, Wellfound, WonsultingAI, Simplify, etc)
+Want to make sure I’m suggesting the right job boards to friends and clients!
+Would love to hear from peoples experiences using other job boards to land the jobs. Thank you!"
+Reply: "There is no right answer. LinkedIn and Indeed work for a lot of people, but others have better luck using other job boards.
+
+Ideally one should be using as many job boards as possible. You never know where you’ll get lucky, it’a a numbers game.
+
+Unfortunately most people struggle with using more than 3-4 sites at a time because it’s very time consuming to constantly refresh them.
+
+You could have a look at https://first2apply.com/ You can use it to browse 8-10 job boards at the same time. It will check any search you save and only notify you when it finds a new listing. And it also offers some nice filtering capabilities like excluding companies or jobs that have certain keywords"
 `;
 
 export class OllamaChatbot {
@@ -215,3 +242,7 @@ Content: ${post.content}`,
     return message;
   }
 }
+
+const PostRelevanceSchema = z.object({
+  isRelevant: z.boolean(),
+});

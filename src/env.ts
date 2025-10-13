@@ -16,7 +16,11 @@ export type Env = {
     password: string;
     userAgent: string;
   };
-  openAiApiKey: string;
+  azure: {
+    endpoint: string;
+    apiKey: string;
+    modelName: string;
+  };
   ollama: {
     host: string;
     model: string;
@@ -39,7 +43,11 @@ export function parseEnv(): Env {
       password: process.env.REDDIT_PASSWORD || "",
       userAgent: process.env.REDDIT_USER_AGENT || "",
     },
-    openAiApiKey: process.env.OPENAI_API_KEY || "",
+    azure: {
+      endpoint: process.env.AZURE_ENDPOINT || "",
+      apiKey: process.env.AZURE_API_KEY || "",
+      modelName: process.env.AZURE_MODEL_NAME || "",
+    },
     ollama: {
       host: process.env.OLLAMA_HOST || "",
       model: process.env.OLLAMA_MODEL || "",
