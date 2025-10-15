@@ -11,7 +11,7 @@ CREATE TABLE `social_media_posts` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `unique_external_id_idx` (`external_id`) USING BTREE,
   KEY `processed_idx` (`processed`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=1112 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 CREATE TABLE `social_media_post_replies` (
   `id` bigint NOT NULL AUTO_INCREMENT,
@@ -21,4 +21,4 @@ CREATE TABLE `social_media_post_replies` (
   PRIMARY KEY (`id`),
   KEY `post_id_fk` (`post_id`),
   CONSTRAINT `post_id_fk` FOREIGN KEY (`post_id`) REFERENCES `social_media_posts` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
-) ENGINE=InnoDB AUTO_INCREMENT=88 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
