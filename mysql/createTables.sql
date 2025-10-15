@@ -1,6 +1,7 @@
-CREATE IF NOT EXISTS DATABASE `chatbot`; /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci */ /*!80016 DEFAULT ENCRYPTION='N' */
+CREATE DATABASE IF NOT EXISTS `chatbot`;
 
-CREATE TABLE `social_media_posts` (
+USE `chatbot`;
+CREATE TABLE IF NOT EXISTS `social_media_posts` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `external_id` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT '',
@@ -13,7 +14,7 @@ CREATE TABLE `social_media_posts` (
   KEY `processed_idx` (`processed`) USING BTREE
 ) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
-CREATE TABLE `social_media_post_replies` (
+CREATE TABLE IF NOT EXISTS `social_media_post_replies` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `post_id` bigint NOT NULL,
